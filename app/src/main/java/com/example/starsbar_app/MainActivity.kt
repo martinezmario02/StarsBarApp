@@ -1,6 +1,7 @@
 package com.example.starsbar_app
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import com.example.starsbar_app.ui.theme.StarsBarTheme
 import com.example.starsbar_app.viewmodels.RestaurantViewModel
 import com.example.starsbar_app.views.LoginScreen
 import com.example.starsbar_app.views.MainLayout
+import com.example.starsbar_app.views.RestaurantDetailsScreen
 import com.example.starsbar_app.views.RestaurantListScreen
 
 class MainActivity : ComponentActivity() {
@@ -26,7 +28,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             StarsBarTheme {
                 val navController = rememberNavController()
-                AppNavHost(navController)
+                val restaurantViewModel: RestaurantViewModel = viewModel() // ✅ Una sola vez aquí
+                AppNavHost(navController, restaurantViewModel)
             }
         }
     }
@@ -52,30 +55,50 @@ fun MainScreen(navController: NavHostController) {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
+fun AppNavHost(navController: NavHostController, restaurantViewModel: RestaurantViewModel) {
     NavHost(
         navController = navController,
         startDestination = "login"
     ) {
-        // Login screen doesn't use the MainLayout
+        // Login
         composable("login") {
             LoginScreen(navController = navController)
         }
 
-        // Main screen uses MainLayout
+        // Main
         composable("main") {
             MainScreen(navController = navController)
         }
 
-        // Restaurant list screen uses MainLayout
+        // Lista de restaurantes
         composable("restaurant_list") {
-            val restaurantViewModel: RestaurantViewModel = viewModel()
-
             MainLayout(
                 navController = navController,
                 title = "Restaurantes"
             ) {
-                RestaurantListScreen(viewModel = restaurantViewModel)
+                RestaurantListScreen(viewModel = restaurantViewModel, navController = navController)
+            }
+        }
+
+        // Información del restaurante
+        composable("restaurant_details/{id}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")?.toIntOrNull()
+            Log.d("NAVDEBUG", "ID recibido: $id")
+
+            val restaurant = restaurantViewModel.restaurants.value.find { it.id == id }
+            Log.d("NAVDEBUG", "Restaurante: $restaurant")
+
+            if (restaurant != null) {
+                MainLayout(navController = navController, title = restaurant.name) {
+                    RestaurantDetailsScreen(navController = navController, restaurant = restaurant)
+                }
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Restaurante no encontrado.")
+                }
             }
         }
     }
@@ -86,6 +109,7 @@ fun AppNavHost(navController: NavHostController) {
 fun DefaultPreview() {
     StarsBarTheme {
         val navController = rememberNavController()
-        AppNavHost(navController)
+        val restaurantViewModel: RestaurantViewModel = viewModel()
+        AppNavHost(navController, restaurantViewModel)
     }
 }

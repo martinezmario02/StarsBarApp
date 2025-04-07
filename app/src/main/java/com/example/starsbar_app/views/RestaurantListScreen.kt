@@ -22,9 +22,10 @@ import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.viewmodels.RestaurantViewModel
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.ContentScale
+import androidx.navigation.NavHostController
 
 @Composable
-fun RestaurantListScreen(viewModel: RestaurantViewModel) {
+fun RestaurantListScreen(viewModel: RestaurantViewModel, navController: NavHostController) {
     val restaurants by viewModel.restaurants
     val isLoading = remember { mutableStateOf(true) }
 
@@ -49,23 +50,25 @@ fun RestaurantListScreen(viewModel: RestaurantViewModel) {
             Text("No hay restaurantes disponibles.")
         }
     } else {
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        LazyColumn(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
             items(restaurants) { restaurant ->
-                RestaurantItem(restaurant)
+                RestaurantItem(restaurant) {
+                    navController.navigate("restaurant_details/${restaurant.id}")
+                }
             }
         }
     }
 }
 
 @Composable
-fun RestaurantItem(restaurant: Restaurant) {
+fun RestaurantItem(restaurant: Restaurant, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable {
-                // Acción al hacer clic en el restaurante
-            }
+            .clickable { onClick() }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             val imageResId = restaurant.image?.let { imageName ->
@@ -134,7 +137,9 @@ fun PreviewRestaurantListScreen() {
             location = "Ubicación Ejemplo",
             description = "Descripción del restaurante ejemplo",
             average_rating = 4.5f,
-            image = "peruano.jpg"
+            image = "peruano.jpg",
+            mail = "a@a.a",
+            phone = "678909090"
         ),
         Restaurant(
             id = 2,
@@ -142,7 +147,9 @@ fun PreviewRestaurantListScreen() {
             location = "Ubicación Prueba",
             description = "Descripción del restaurante prueba",
             average_rating = 4.0f,
-            image = "peruano.jpg"
+            image = "peruano.jpg",
+            mail = "a@a.a",
+            phone = "678909090"
         )
     )
 
@@ -153,7 +160,7 @@ fun PreviewRestaurantListScreen() {
 fun RestaurantListScreenContent(restaurants: List<Restaurant>) {
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         items(restaurants) { restaurant ->
-            RestaurantItem(restaurant)
+            RestaurantItem(restaurant, {})
         }
     }
 }
