@@ -90,7 +90,7 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
 
             if (restaurant != null) {
                 MainLayout(navController = navController, title = restaurant.name) {
-                    RestaurantDetailsScreen(navController = navController, restaurant = restaurant)
+                    RestaurantDetailsScreen(viewModel = restaurantViewModel, navController = navController, restaurant = restaurant)
                 }
             } else {
                 Box(

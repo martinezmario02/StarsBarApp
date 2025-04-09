@@ -1,8 +1,12 @@
 package com.example.starsbar_app.views
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,29 +34,45 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.starsbar_app.ui.theme.StarsBarTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import com.example.starsbar_app.models.Review
+import com.example.starsbar_app.viewmodels.RestaurantViewModel
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun RestaurantDetailsScreen(
-    navController: NavController,
-    restaurant: Restaurant
-) {
+fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, navController: NavController, restaurant: Restaurant) {
     val scrollState = rememberScrollState()
+    val reviews by viewModel.reviews
+    val isLoading = remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        isLoading.value = true
+        viewModel.fetchReviews(restaurant.id)
+        isLoading.value = false
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        HeaderImage(restaurant)
+        HeaderImage(restaurant, reviews.size)
         DescriptionSection(restaurant)
         //LocationSection(restaurant)
         ContactInfoSection(restaurant)
-        ReviewsSection()
+        ReviewsSection(reviews)
     }
 }
 
 @Composable
-fun HeaderImage(restaurant: Restaurant) {
+fun HeaderImage(restaurant: Restaurant, reviewsSize: Int) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -136,7 +156,7 @@ fun HeaderImage(restaurant: Restaurant) {
                 }
 
                 Text(
-                    text = "(${(10..500).random()} reseñas)",
+                    text = "(${reviewsSize} reseñas)",
                     color = Color.White,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(start = 8.dp)
@@ -182,8 +202,20 @@ fun DescriptionSection(restaurant: Restaurant) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatDateTime(dateTimeString: String): String {
+    return try {
+        val dateTime = LocalDateTime.parse(dateTimeString)
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+        dateTime.format(formatter)
+    } catch (e: Exception) {
+        dateTimeString
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ReviewsSection() {
+fun ReviewsSection(reviews: List<Review>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -196,19 +228,35 @@ fun ReviewsSection() {
         ) {
             SectionTitle(title = "Reseñas", modifier = Modifier.weight(1f))
         }
-        ReviewItem(
-            name = "María García",
-            rating = 5,
-            comment = "Excelente comida y servicio. Volveré pronto.",
-            date = "02/11/2024"
-        )
 
-        ReviewItem(
-            name = "Juan Pérez",
-            rating = 4,
-            comment = "Muy buena experiencia. La paella estaba deliciosa pero el postre podría mejorar.",
-            date = "12/02/2024"
-        )
+        if (reviews.isEmpty()) {
+            Text(
+                text = "¡Sé el primero en comentar!",
+                fontSize = 16.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                reviews.forEach { review ->
+                    val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                    val formattedDate = formatter.format(review.created_at)
+
+                    ReviewItem(
+                        name = review.name,
+                        rating = review.rating.toInt(),
+                        comment = review.comment,
+                        date = formattedDate
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -308,7 +356,6 @@ fun LocationSection(restaurant: Restaurant) {
                     .background(Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
-                // Placeholder for map
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
@@ -385,6 +432,7 @@ fun SectionTitle(title: String, modifier: Modifier = Modifier) {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, heightDp = 1200)
 @Composable
 fun RestaurantDetailsScreenPreview() {
@@ -401,8 +449,8 @@ fun RestaurantDetailsScreenPreview() {
         phone = "676767676"
     )
 
-    // Create a dummy NavController for preview
     val dummyNavController = rememberNavController()
+    val dummyViewModel = RestaurantViewModel()
 
     StarsBarTheme {
         Surface(
@@ -410,6 +458,7 @@ fun RestaurantDetailsScreenPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             RestaurantDetailsScreen(
+                viewModel = dummyViewModel,
                 navController = dummyNavController,
                 restaurant = sampleRestaurant
             )
