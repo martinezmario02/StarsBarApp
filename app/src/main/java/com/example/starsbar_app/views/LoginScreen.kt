@@ -1,5 +1,7 @@
 package com.example.starsbar_app.views
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.starsbar_app.AppNavHost
 import com.example.starsbar_app.ui.theme.*
 import com.example.starsbar_app.viewmodels.RestaurantViewModel
+import com.example.starsbar_app.viewmodels.UserViewModel
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -153,12 +156,14 @@ fun LoginScreen(navController: NavController) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     StarsBarTheme {
         val navController = rememberNavController()
         val restaurantViewModel: RestaurantViewModel = viewModel()
-        AppNavHost(navController, restaurantViewModel)
+        val userViewModel: UserViewModel = viewModel()
+        AppNavHost(navController, restaurantViewModel, userViewModel)
     }
 }

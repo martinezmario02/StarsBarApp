@@ -5,8 +5,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,7 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,10 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.ui.theme.Yellow
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,7 +35,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.example.starsbar_app.models.Review
+import com.example.starsbar_app.ui.theme.NavyBlue
 import com.example.starsbar_app.viewmodels.RestaurantViewModel
+import com.example.starsbar_app.viewmodels.UserViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -47,7 +46,7 @@ import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, navController: NavController, restaurant: Restaurant) {
+fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, userViewModel: UserViewModel, restaurant: Restaurant) {
     val scrollState = rememberScrollState()
     val reviews by viewModel.reviews
     val isLoading = remember { mutableStateOf(true) }
@@ -67,7 +66,7 @@ fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, navController: NavCo
         DescriptionSection(restaurant)
         //LocationSection(restaurant)
         ContactInfoSection(restaurant)
-        ReviewsSection(reviews)
+        ReviewsSection(viewModel, userViewModel, restaurant, reviews)
     }
 }
 
@@ -203,19 +202,11 @@ fun DescriptionSection(restaurant: Restaurant) {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun formatDateTime(dateTimeString: String): String {
-    return try {
-        val dateTime = LocalDateTime.parse(dateTimeString)
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-        dateTime.format(formatter)
-    } catch (e: Exception) {
-        dateTimeString
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ReviewsSection(reviews: List<Review>) {
+fun ReviewsSection(viewModel: RestaurantViewModel, userViewModel: UserViewModel, restaurant: Restaurant, reviews: List<Review>) {
+    var showReviewDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -227,6 +218,29 @@ fun ReviewsSection(reviews: List<Review>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             SectionTitle(title = "Reseñas", modifier = Modifier.weight(1f))
+        }
+
+        RatingSummaryCard(restaurant, reviews)
+
+        OutlinedButton(
+            onClick = { showReviewDialog = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            border = ButtonDefaults.outlinedButtonBorder
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Escribir una opinión",
+                fontSize = 16.sp
+            )
         }
 
         if (reviews.isEmpty()) {
@@ -248,15 +262,226 @@ fun ReviewsSection(reviews: List<Review>) {
                     val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                     val formattedDate = formatter.format(review.created_at)
 
+                    LaunchedEffect(review.user_id) {
+                        userViewModel.fetchUserName(review.user_id)
+                    }
+
+                    val name = userViewModel.userNames[review.user_id] ?: ""
+
                     ReviewItem(
-                        name = review.name,
+                        name = name,
                         rating = review.rating.toInt(),
                         comment = review.comment,
                         date = formattedDate
                     )
+
                 }
             }
         }
+    }
+
+    if (showReviewDialog) {
+        var rating by remember { mutableStateOf(5) }
+        var comment by remember { mutableStateOf("") }
+        var isSubmitting by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { showReviewDialog = false },
+            title = { Text("Escribe tu opinión") },
+            text = {
+                Column {
+                    Text("Calificación:")
+                    Row(
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        repeat(5) { index ->
+                            IconButton(
+                                onClick = { rating = index + 1 }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Star ${index + 1}",
+                                    tint = if (index < rating) Yellow else Color.Gray.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = comment,
+                        onValueChange = { comment = it },
+                        label = { Text("Comentario") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        maxLines = 5
+                    )
+
+                    if (isSubmitting) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isSubmitting = true
+                        scope.launch {
+                            try {
+                                viewModel.addReview(
+                                    restaurantId = restaurant.id,
+                                    userId = 1,
+                                    rating = rating,
+                                    comment = comment
+                                )
+                                isSubmitting = false
+                                showReviewDialog = false
+                                viewModel.fetchReviews(restaurant.id)
+                            } catch (e: Exception) {
+                                isSubmitting = false
+                            }
+                        }
+                    },
+                    enabled = !isSubmitting && comment.isNotBlank()
+                ) {
+                    Text("Enviar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showReviewDialog = false },
+                    enabled = !isSubmitting
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun RatingSummaryCard(restaurant: Restaurant, reviews: List<Review>) {
+    val excellentCount = reviews.count { it.rating >= 4.5f }
+    val goodCount = reviews.count { it.rating >= 3.5f && it.rating < 4.5f }
+    val normalCount = reviews.count { it.rating >= 2.5f && it.rating < 3.5f }
+    val badCount = reviews.count { it.rating >= 1.5f && it.rating < 2.5f }
+    val terribleCount = reviews.count { it.rating < 1.5f }
+
+    val totalReviews = reviews.size.coerceAtLeast(1)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.LightGray
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(0.5f)
+                ) {
+                    Text(
+                        text = String.format("%.1f", restaurant.average_rating),
+                        fontSize = 46.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NavyBlue
+                    )
+                    Text(
+                        text = "Muy bueno",
+                        fontSize = 18.sp,
+                        color = NavyBlue
+                    )
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        repeat(5) { index ->
+                            val isFilled = index < restaurant.average_rating.toInt()
+                            val isHalfFilled = !isFilled && index == restaurant.average_rating.toInt() &&
+                                    restaurant.average_rating - restaurant.average_rating.toInt() >= 0.5f
+
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (isFilled || isHalfFilled) Yellow else Color.Gray.copy(alpha = 0.5f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = totalReviews.toString() + " reseña/s",
+                        fontSize = 16.sp,
+                        color = NavyBlue,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.weight(0.7f)
+                ) {
+                    RatingBar(label = "Excelente", count = excellentCount, percentage = excellentCount.toFloat() / totalReviews)
+                    RatingBar(label = "Bueno", count = goodCount, percentage = goodCount.toFloat() / totalReviews)
+                    RatingBar(label = "Normal", count = normalCount, percentage = normalCount.toFloat() / totalReviews)
+                    RatingBar(label = "Malo", count = badCount, percentage = badCount.toFloat() / totalReviews)
+                    RatingBar(label = "Pésimo", count = terribleCount, percentage = terribleCount.toFloat() / totalReviews)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RatingBar(label: String, count: Int, percentage: Float) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = NavyBlue,
+            modifier = Modifier.width(80.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.Gray.copy(alpha = 0.3f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(percentage)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(NavyBlue)
+            )
+        }
+
+        Text(
+            text = count.toString(),
+            fontSize = 14.sp,
+            color = NavyBlue,
+            modifier = Modifier.width(40.dp),
+            textAlign = TextAlign.End
+        )
     }
 }
 
@@ -284,7 +509,7 @@ fun ReviewItem(name: String, rating: Int, comment: String, date: String) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = name.first().toString(),
+                        text = if (name.isNotEmpty()) name.first().toString() else "?",
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
@@ -449,7 +674,7 @@ fun RestaurantDetailsScreenPreview() {
         phone = "676767676"
     )
 
-    val dummyNavController = rememberNavController()
+    val dummyUserViewModel = UserViewModel()
     val dummyViewModel = RestaurantViewModel()
 
     StarsBarTheme {
@@ -459,10 +684,9 @@ fun RestaurantDetailsScreenPreview() {
         ) {
             RestaurantDetailsScreen(
                 viewModel = dummyViewModel,
-                navController = dummyNavController,
+                userViewModel = dummyUserViewModel,
                 restaurant = sampleRestaurant
             )
         }
     }
 }
-

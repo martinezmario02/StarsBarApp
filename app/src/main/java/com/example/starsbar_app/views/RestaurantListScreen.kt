@@ -25,9 +25,10 @@ import com.example.starsbar_app.viewmodels.RestaurantViewModel
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.ContentScale
 import androidx.navigation.NavHostController
+import com.example.starsbar_app.viewmodels.UserViewModel
 
 @Composable
-fun RestaurantListScreen(viewModel: RestaurantViewModel, navController: NavHostController) {
+fun RestaurantListScreen(viewModel: RestaurantViewModel, userViewModel: UserViewModel, navController: NavHostController) {
     val restaurants by viewModel.restaurants
     val isLoading = remember { mutableStateOf(true) }
 

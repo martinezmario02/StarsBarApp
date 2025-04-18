@@ -1,9 +1,11 @@
 package com.example.starsbar_app
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -17,19 +19,22 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.starsbar_app.ui.theme.StarsBarTheme
 import com.example.starsbar_app.viewmodels.RestaurantViewModel
+import com.example.starsbar_app.viewmodels.UserViewModel
 import com.example.starsbar_app.views.LoginScreen
 import com.example.starsbar_app.views.MainLayout
 import com.example.starsbar_app.views.RestaurantDetailsScreen
 import com.example.starsbar_app.views.RestaurantListScreen
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             StarsBarTheme {
                 val navController = rememberNavController()
-                val restaurantViewModel: RestaurantViewModel = viewModel() // ✅ Una sola vez aquí
-                AppNavHost(navController, restaurantViewModel)
+                val restaurantViewModel: RestaurantViewModel = viewModel()
+                val userViewModel: UserViewModel = viewModel()
+                AppNavHost(navController, restaurantViewModel, userViewModel)
             }
         }
     }
@@ -54,8 +59,9 @@ fun MainScreen(navController: NavHostController) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavHost(navController: NavHostController, restaurantViewModel: RestaurantViewModel) {
+fun AppNavHost(navController: NavHostController, restaurantViewModel: RestaurantViewModel, userViewModel: UserViewModel) {
     NavHost(
         navController = navController,
         startDestination = "login"
@@ -76,7 +82,7 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
                 navController = navController,
                 title = "Restaurantes"
             ) {
-                RestaurantListScreen(viewModel = restaurantViewModel, navController = navController)
+                RestaurantListScreen(viewModel = restaurantViewModel, userViewModel = userViewModel, navController = navController)
             }
         }
 
@@ -90,7 +96,7 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
 
             if (restaurant != null) {
                 MainLayout(navController = navController, title = restaurant.name) {
-                    RestaurantDetailsScreen(viewModel = restaurantViewModel, navController = navController, restaurant = restaurant)
+                    RestaurantDetailsScreen(viewModel = restaurantViewModel, userViewModel = userViewModel, restaurant = restaurant)
                 }
             } else {
                 Box(
@@ -110,6 +116,7 @@ fun DefaultPreview() {
     StarsBarTheme {
         val navController = rememberNavController()
         val restaurantViewModel: RestaurantViewModel = viewModel()
-        AppNavHost(navController, restaurantViewModel)
+        val userViewModel: UserViewModel = viewModel()
+        AppNavHost(navController, restaurantViewModel, userViewModel)
     }
 }
