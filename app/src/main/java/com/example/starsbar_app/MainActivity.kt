@@ -68,7 +68,7 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
     ) {
         // Login
         composable("login") {
-            LoginScreen(navController = navController)
+            LoginScreen(navController = navController, userViewModel)
         }
 
         // Main

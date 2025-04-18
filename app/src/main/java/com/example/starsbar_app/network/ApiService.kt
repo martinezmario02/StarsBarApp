@@ -6,6 +6,7 @@ import com.example.starsbar_app.models.LoginResponse
 import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.models.Review
 import com.example.starsbar_app.models.ReviewRequest
+import com.example.starsbar_app.models.UserIdResponse
 import com.example.starsbar_app.models.UserNameResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -30,6 +31,9 @@ interface ApiService {
 
     @GET("api/users/{user_id}/name") // Ruta para obtener el nombre del usuario
     suspend fun getUserName(@Path("user_id") id: Int): UserNameResponse
+
+    @GET("/api/users/{mail}/id")  // Ruta para obtener el id del usuario
+    suspend fun getUserId(@Path("mail") email: String): UserIdResponse
 
     @POST("api/restaurants/{id}/reviews") // Ruta para añadir una nueva valoración
     suspend fun addReview(@Path("id") restaurantId: Int, @Body review: ReviewRequest): ApiResponse

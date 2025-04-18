@@ -30,20 +30,18 @@ import com.example.starsbar_app.viewmodels.RestaurantViewModel
 import com.example.starsbar_app.viewmodels.UserViewModel
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, userViewModel: UserViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        NavyBlue,
-                        ColorPrimary
-                    )
+                    colors = listOf(NavyBlue, ColorPrimary)
                 )
             )
             .padding(24.dp),
@@ -98,7 +96,9 @@ fun LoginScreen(navController: NavController) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true
             )
+
             Spacer(modifier = Modifier.height(10.dp))
+
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -120,33 +120,36 @@ fun LoginScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(20.dp))
+
             Button(
                 onClick = {
-                    //if (email.isEmpty() || password.isEmpty()) {
-                    //    showError = true
-                    //} else {
-                    //    showError = false
-                        navController.navigate("restaurant_list")
-                    //}
+                    if (email.isEmpty() || password.isEmpty()) {
+                        showError = true
+                        errorMessage = "Por favor, complete todos los campos"
+                    } else {
+                        showError = false
+                        userViewModel.login(email, password) { success, result ->
+                            if (success) {
+                                navController.navigate("restaurant_list")
+                            } else {
+                                showError = true
+                                errorMessage = "Error al introducir las credenciales"
+                            }
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonBlue
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = ButtonBlue),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(
-                    text = "Iniciar Sesión",
-                    color = White,
-                    fontSize = 16.sp
-                )
+                Text(text = "Iniciar Sesión", color = White, fontSize = 16.sp)
             }
 
-            if (showError) {
+            if (showError && errorMessage != null) {
                 Text(
-                    text = "Por favor, complete todos los campos",
+                    text = errorMessage ?: "",
                     color = Color.Red,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 10.dp)

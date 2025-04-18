@@ -1,6 +1,7 @@
 package com.example.starsbar_app.views
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -330,12 +331,17 @@ fun ReviewsSection(viewModel: RestaurantViewModel, userViewModel: UserViewModel,
             confirmButton = {
                 Button(
                     onClick = {
+                        if (userViewModel.currentUserId == null) {
+                            Log.e("AddReview", "No se puede añadir la review: userId es null")
+                            return@Button
+                        }
+
                         isSubmitting = true
                         scope.launch {
                             try {
                                 viewModel.addReview(
                                     restaurantId = restaurant.id,
-                                    userId = 1,
+                                    userId = userViewModel.currentUserId!!,
                                     rating = rating,
                                     comment = comment
                                 )
@@ -343,6 +349,7 @@ fun ReviewsSection(viewModel: RestaurantViewModel, userViewModel: UserViewModel,
                                 showReviewDialog = false
                                 viewModel.fetchReviews(restaurant.id)
                             } catch (e: Exception) {
+                                Log.e("AddReview", "Error al añadir review: ${e.message}", e)
                                 isSubmitting = false
                             }
                         }
