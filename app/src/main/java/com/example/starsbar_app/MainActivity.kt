@@ -22,6 +22,7 @@ import com.example.starsbar_app.viewmodels.RestaurantViewModel
 import com.example.starsbar_app.viewmodels.UserViewModel
 import com.example.starsbar_app.views.LoginScreen
 import com.example.starsbar_app.views.MainLayout
+import com.example.starsbar_app.views.RegisterScreen
 import com.example.starsbar_app.views.RestaurantDetailsScreen
 import com.example.starsbar_app.views.RestaurantListScreen
 
@@ -69,6 +70,11 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
         // Login
         composable("login") {
             LoginScreen(navController = navController, userViewModel)
+        }
+
+        // Registro de usuarios
+        composable("register_screen") {
+            RegisterScreen(navController = navController, userViewModel)
         }
 
         // Main

@@ -3,6 +3,7 @@ package com.example.starsbar_app.network
 import com.example.starsbar_app.models.ApiResponse
 import com.example.starsbar_app.models.LoginRequest
 import com.example.starsbar_app.models.LoginResponse
+import com.example.starsbar_app.models.RegisterRequest
 import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.models.Review
 import com.example.starsbar_app.models.ReviewRequest
@@ -37,6 +38,9 @@ interface ApiService {
 
     @POST("api/restaurants/{id}/reviews") // Ruta para añadir una nueva valoración
     suspend fun addReview(@Path("id") restaurantId: Int, @Body review: ReviewRequest): ApiResponse
+
+    @POST("api/users/register") // Ruta para registrar usuarios
+    suspend fun registerUser(@Body request: RegisterRequest): ApiResponse
 
 
     companion object {

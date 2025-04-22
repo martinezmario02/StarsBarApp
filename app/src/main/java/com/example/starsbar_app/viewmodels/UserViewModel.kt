@@ -48,4 +48,20 @@ class UserViewModel : ViewModel() {
             userNames[id] = name
         }
     }
+
+    fun register(name: String, lastname: String, location: String, mail: String, pass: String, rol: String, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = userController.registerUser(name, lastname, location, mail, pass, rol)
+                if (response.success) {
+                    onResult(true, response.message)
+                } else {
+                    onResult(false, response.message)
+                }
+            } catch (e: Exception) {
+                Log.e("REGISTER", "Error: ${e.message}", e)
+                onResult(false, "Error: ${e.message}")
+            }
+        }
+    }
 }

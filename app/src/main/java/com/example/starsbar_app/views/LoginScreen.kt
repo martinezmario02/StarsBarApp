@@ -41,7 +41,7 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel = vie
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(NavyBlue, ColorPrimary)
+                    colors = listOf(ColorPrimaryDark, ColorPrimary)
                 )
             )
             .padding(24.dp),
@@ -145,6 +145,29 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel = vie
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(text = "Iniciar Sesión", color = White, fontSize = 16.sp)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "¿Aún no te has registrado?",
+                    color = LightGray,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TextButton(onClick = { navController.navigate("register_screen") }) {
+                    Text(
+                        text = "Regístrate aquí",
+                        color = Yellow,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             if (showError && errorMessage != null) {
