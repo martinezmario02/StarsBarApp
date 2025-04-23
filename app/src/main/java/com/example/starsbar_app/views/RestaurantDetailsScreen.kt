@@ -44,6 +44,10 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.ui.graphics.Brush
+import coil.compose.rememberAsyncImagePainter
+import com.example.starsbar_app.R
+import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -73,39 +77,31 @@ fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, userViewModel: UserV
 
 @Composable
 fun HeaderImage(restaurant: Restaurant, reviewsSize: Int) {
+    val context = LocalContext.current
+    val imageFile = restaurant.image?.let { File(context.filesDir, it) }
+    val painter = if (imageFile?.exists() == true) {
+        rememberAsyncImagePainter(model = imageFile)
+    } else {
+        painterResource(id = R.drawable.defecto)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(250.dp)
     ) {
-        val imageResId = restaurant.image?.let { imageName ->
-            val cleanName = imageName.substringBeforeLast(".").lowercase()
-            val resId = LocalContext.current.resources.getIdentifier(
-                cleanName,
-                "drawable",
-                LocalContext.current.packageName
-            )
-            if (resId != 0) resId else null
-        }
-
-        imageResId?.let {
-            Image(
-                painter = painterResource(id = it),
-                contentDescription = "Restaurant Image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } ?: Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.LightGray)
+        Image(
+            painter = painter,
+            contentDescription = "Restaurant Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                    Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
                             Color.Black.copy(alpha = 0.7f)
@@ -133,19 +129,16 @@ fun HeaderImage(restaurant: Restaurant, reviewsSize: Int) {
             ) {
                 Text(
                     text = "${restaurant.average_rating}",
-                    color = Yellow,
+                    color = Color(0xFFFFA000),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Row(
-                    modifier = Modifier.padding(start = 4.dp)
-                ) {
+                Row(modifier = Modifier.padding(start = 4.dp)) {
                     repeat(5) { index ->
                         val starColor =
-                            if (index < restaurant.average_rating.toInt()) Yellow else Color.Gray.copy(
-                                alpha = 0.5f
-                            )
+                            if (index < restaurant.average_rating.toInt()) Color(0xFFFFA000)
+                            else Color.Gray.copy(alpha = 0.5f)
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
@@ -678,7 +671,8 @@ fun RestaurantDetailsScreenPreview() {
         image = "peruano",
         average_rating = 4.7f,
         mail ="laparrillada@gmail.com",
-        phone = "676767676"
+        phone = "676767676",
+        pass = "topsecret"
     )
 
     val dummyUserViewModel = UserViewModel()

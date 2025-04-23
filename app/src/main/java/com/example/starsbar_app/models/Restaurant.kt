@@ -10,5 +10,6 @@ data class Restaurant(
     val average_rating: Float,
     val mail: String,
     val phone: String,
-    val image: String? = null
+    val image: String? = null,
+    val pass: String
 ) : Serializable

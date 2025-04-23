@@ -26,6 +26,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.ContentScale
 import androidx.navigation.NavHostController
 import com.example.starsbar_app.viewmodels.UserViewModel
+import com.example.starsbar_app.R
+import coil.compose.rememberAsyncImagePainter
+import java.io.File
 
 @Composable
 fun RestaurantListScreen(viewModel: RestaurantViewModel, userViewModel: UserViewModel, navController: NavHostController) {
@@ -67,6 +70,8 @@ fun RestaurantListScreen(viewModel: RestaurantViewModel, userViewModel: UserView
 
 @Composable
 fun RestaurantItem(restaurant: Restaurant, onClick: () -> Unit) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,26 +79,21 @@ fun RestaurantItem(restaurant: Restaurant, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            val imageResId = restaurant.image?.let { imageName ->
-                val cleanName = imageName.substringBeforeLast(".").lowercase()
-                val resId = LocalContext.current.resources.getIdentifier(
-                    cleanName,
-                    "drawable",
-                    LocalContext.current.packageName
-                )
-                if (resId != 0) resId else null
+            val imageFile = restaurant.image?.let { File(context.filesDir, it) }
+            val painter = if (imageFile?.exists() == true) {
+                rememberAsyncImagePainter(model = imageFile)
+            } else {
+                painterResource(id = R.drawable.sitarilla)
             }
 
-            imageResId?.let {
-                Image(
-                    painter = painterResource(id = it),
-                    contentDescription = "Restaurant Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
+            Image(
+                painter = painter,
+                contentDescription = "Restaurant Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                contentScale = ContentScale.Crop
+            )
 
             Column(
                 modifier = Modifier.padding(12.dp)
@@ -142,7 +142,8 @@ fun PreviewRestaurantListScreen() {
             average_rating = 4.5f,
             image = "peruano.jpg",
             mail = "a@a.a",
-            phone = "678909090"
+            phone = "678909090",
+            pass = "topsecret"
         ),
         Restaurant(
             id = 2,
@@ -152,7 +153,8 @@ fun PreviewRestaurantListScreen() {
             average_rating = 4.0f,
             image = "peruano.jpg",
             mail = "a@a.a",
-            phone = "678909090"
+            phone = "678909090",
+            pass = "topsecret"
         )
     )
 

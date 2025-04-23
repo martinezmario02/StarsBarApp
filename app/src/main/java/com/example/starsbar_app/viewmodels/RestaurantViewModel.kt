@@ -1,5 +1,6 @@
 package com.example.starsbar_app.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -47,6 +48,22 @@ class RestaurantViewModel : ViewModel() {
             )
 
             restaurantController.addReview(restaurantId, newReview)
+        }
+    }
+
+    fun registerRestaurant(name: String, location: String, description: String, mail: String, phone: String, image: String, pass: String, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = restaurantController.registerRestaurant(name, location, description, mail, phone, image, pass)
+                if (response.success) {
+                    onResult(true, response.message)
+                } else {
+                    onResult(false, response.message)
+                }
+            } catch (e: Exception) {
+                Log.e("REGISTERRESTAUTANT", "Error: ${e.message}", e)
+                onResult(false, "Error: ${e.message}")
+            }
         }
     }
 }

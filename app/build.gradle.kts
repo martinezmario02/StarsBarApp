@@ -79,6 +79,8 @@ dependencies {
     implementation("org.jetbrains:annotations:15.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     implementation ("com.auth0.android:jwtdecode:2.0.1")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
 
 
     // Test dependencies

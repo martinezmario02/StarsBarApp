@@ -1,6 +1,7 @@
 package com.example.starsbar_app.controllers
 
 import com.example.starsbar_app.models.ApiResponse
+import com.example.starsbar_app.models.RegisterRequest
 import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.models.Review
 import com.example.starsbar_app.models.ReviewRequest
@@ -24,5 +25,10 @@ class RestaurantController {
 
     suspend fun addReview(restaurantId: Int, review: ReviewRequest): ApiResponse {
         return apiService.addReview(restaurantId, review)
+    }
+
+    suspend fun registerRestaurant(name: String, location: String, description: String, mail: String, phone: String, image: String, pass: String): ApiResponse {
+        val request = Restaurant(-1, name, location, description, 0.0f, mail, phone, image, pass)
+        return apiService.registerRestaurant(request)
     }
 }

@@ -74,7 +74,7 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
 
         // Registro de usuarios
         composable("register_screen") {
-            RegisterScreen(navController = navController, userViewModel)
+            RegisterScreen(navController = navController, userViewModel, restaurantViewModel)
         }
 
         // Main

@@ -1,5 +1,6 @@
 package com.example.starsbar_app.views
 
+import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -39,10 +40,14 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.starsbar_app.models.RegisterRequest
 import com.example.starsbar_app.ui.theme.*
+import com.example.starsbar_app.viewmodels.RestaurantViewModel
 import com.example.starsbar_app.viewmodels.UserViewModel
+import java.io.File
+import java.io.FileOutputStream
+import androidx.core.net.toUri
 
 @Composable
-fun RegisterScreen(navController: NavController, userViewModel: UserViewModel = viewModel()) {
+fun RegisterScreen(navController: NavController, userViewModel: UserViewModel = viewModel(), restaurantViewModel: RestaurantViewModel = viewModel()) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -150,7 +155,7 @@ fun RegisterScreen(navController: NavController, userViewModel: UserViewModel = 
 
             when (selectedTabIndex) {
                 0 -> UserRegistrationForm(navController, userViewModel)
-                1 -> RestaurantRegistrationForm(navController, userViewModel)
+                1 -> RestaurantRegistrationForm(navController, userViewModel, restaurantViewModel)
             }
 
             if (showError && errorMessage != null) {
@@ -387,8 +392,25 @@ fun UserRegistrationForm(navController: NavController, userViewModel: UserViewMo
     }
 }
 
+fun saveImageToInternalStorage(context: Context, uri: Uri, restaurantName: String): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val sanitizedName = restaurantName.lowercase().replace("\\s+".toRegex(), "_")
+        val fileName = "$sanitizedName.jpg"
+        val file = File(context.filesDir, fileName)
+        val outputStream = FileOutputStream(file)
+        inputStream?.copyTo(outputStream)
+        inputStream?.close()
+        outputStream.close()
+        fileName
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
 @Composable
-fun RestaurantRegistrationForm(navController: NavController, userViewModel: UserViewModel) {
+fun RestaurantRegistrationForm(navController: NavController, userViewModel: UserViewModel, restaurantViewModel: RestaurantViewModel) {
     var name by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -425,15 +447,22 @@ fun RestaurantRegistrationForm(navController: NavController, userViewModel: User
             contentAlignment = Alignment.Center
         ) {
             if (imageUri != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(imageUri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Restaurant Image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                val imageFile = imageUri?.let { uri ->
+                    val nameForPreview = name.ifEmpty { "temp" }
+                    saveImageToInternalStorage(context, uri, nameForPreview)
+                }?.let { File(context.filesDir, it) }
+
+                if (imageFile != null && imageFile.exists()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(imageFile.toUri())
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Restaurant Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             } else {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -660,19 +689,28 @@ fun RestaurantRegistrationForm(navController: NavController, userViewModel: User
                 } else if (password != confirmPassword) {
                     showError = true
                     errorMessage = "Las contraseñas no coinciden"
+                } else if (imageUri == null) {
+                    showError = true
+                    errorMessage = "Por favor, selecciona una imagen"
                 } else {
                     showError = false
-                    // Aquí iría la lógica para registrar el restaurante
-                    /*userViewModel.registerAsRestaurant(nombre, email, password, "RESTO123") { success, result ->
-                        if (success) {
-                            navController.navigate("restaurant_dashboard") {
-                                popUpTo("login") { inclusive = true }
+                    val imageName = saveImageToInternalStorage(context, imageUri!!, name)
+                    if (imageName == null) {
+                        showError = true
+                        errorMessage = "No se pudo guardar la imagen"
+                    }
+                    else {
+                        restaurantViewModel.registerRestaurant(
+                            name, location, description, mail, phone, imageName, password
+                        ) { success, result ->
+                            if (success) {
+                                navController.navigate("login")
+                            } else {
+                                showError = true
+                                errorMessage = result ?: "Error al registrar el restaurante"
                             }
-                        } else {
-                            showError = true
-                            errorMessage = result ?: "Error al registrar el restaurante"
                         }
-                    }*/
+                    }
                 }
             },
             modifier = Modifier

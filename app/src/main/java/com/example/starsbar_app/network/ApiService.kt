@@ -42,6 +42,9 @@ interface ApiService {
     @POST("api/users/register") // Ruta para registrar usuarios
     suspend fun registerUser(@Body request: RegisterRequest): ApiResponse
 
+    @POST("api/restaurants") // Ruta para añadir empresas
+    suspend fun registerRestaurant(@Body request: Restaurant): ApiResponse
+
 
     companion object {
         private const val BASE_URL = "http://10.0.2.2:3000/"
