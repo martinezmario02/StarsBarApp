@@ -8,8 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -29,16 +33,29 @@ import com.example.starsbar_app.viewmodels.UserViewModel
 import com.example.starsbar_app.R
 import coil.compose.rememberAsyncImagePainter
 import java.io.File
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.text.input.TextFieldValue
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RestaurantListScreen(viewModel: RestaurantViewModel, userViewModel: UserViewModel, navController: NavHostController) {
+fun RestaurantListScreen(
+    viewModel: RestaurantViewModel,
+    userViewModel: UserViewModel,
+    navController: NavHostController
+) {
     val restaurants by viewModel.restaurants
     val isLoading = remember { mutableStateOf(true) }
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
 
     LaunchedEffect(Unit) {
         isLoading.value = true
         viewModel.fetchRestaurants()
         isLoading.value = false
+    }
+
+    val filteredRestaurants = restaurants.filter {
+        it.name.contains(searchQuery.text, ignoreCase = true)
     }
 
     if (isLoading.value) {
@@ -48,20 +65,43 @@ fun RestaurantListScreen(viewModel: RestaurantViewModel, userViewModel: UserView
         ) {
             CircularProgressIndicator()
         }
-    } else if (restaurants.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No hay restaurantes disponibles.")
-        }
     } else {
-        LazyColumn(modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
-            items(restaurants) { restaurant ->
-                RestaurantItem(restaurant) {
-                    navController.navigate("restaurant_details/${restaurant.id}")
+        Column(modifier = Modifier.fillMaxSize()) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Buscar restaurante") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Buscar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                )
+            )
+
+            if (filteredRestaurants.isEmpty()) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No se encontraron restaurantes.")
+                }
+            } else {
+                LazyColumn(modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)) {
+                    items(filteredRestaurants) { restaurant ->
+                        RestaurantItem(restaurant) {
+                            navController.navigate("restaurant_details/${restaurant.id}")
+                        }
+                    }
                 }
             }
         }
@@ -79,11 +119,24 @@ fun RestaurantItem(restaurant: Restaurant, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            val imageFile = restaurant.image?.let { File(context.filesDir, it) }
-            val painter = if (imageFile?.exists() == true) {
-                rememberAsyncImagePainter(model = imageFile)
-            } else {
-                painterResource(id = R.drawable.sitarilla)
+            val fileImage = restaurant.image?.let { File(context.filesDir, it) }
+
+            val painter = when {
+                fileImage?.exists() == true -> {
+                    rememberAsyncImagePainter(model = fileImage)
+                }
+                else -> {
+                    val resourceId = context.resources.getIdentifier(
+                        restaurant.image?.substringBefore(".") ?: "",
+                        "drawable",
+                        context.packageName
+                    )
+                    if (resourceId != 0) {
+                        painterResource(id = resourceId)
+                    } else {
+                        painterResource(id = R.drawable.defecto)
+                    }
+                }
             }
 
             Image(

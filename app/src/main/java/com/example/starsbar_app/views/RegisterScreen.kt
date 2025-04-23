@@ -447,22 +447,12 @@ fun RestaurantRegistrationForm(navController: NavController, userViewModel: User
             contentAlignment = Alignment.Center
         ) {
             if (imageUri != null) {
-                val imageFile = imageUri?.let { uri ->
-                    val nameForPreview = name.ifEmpty { "temp" }
-                    saveImageToInternalStorage(context, uri, nameForPreview)
-                }?.let { File(context.filesDir, it) }
-
-                if (imageFile != null && imageFile.exists()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(imageFile.toUri())
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Restaurant Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+                AsyncImage(
+                    model = imageUri,
+                    contentDescription = "Restaurant Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             } else {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally

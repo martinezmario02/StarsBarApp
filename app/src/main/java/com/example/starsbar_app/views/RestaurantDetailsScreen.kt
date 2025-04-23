@@ -79,10 +79,23 @@ fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, userViewModel: UserV
 fun HeaderImage(restaurant: Restaurant, reviewsSize: Int) {
     val context = LocalContext.current
     val imageFile = restaurant.image?.let { File(context.filesDir, it) }
-    val painter = if (imageFile?.exists() == true) {
-        rememberAsyncImagePainter(model = imageFile)
-    } else {
-        painterResource(id = R.drawable.defecto)
+
+    val painter = when {
+        imageFile?.exists() == true -> {
+            rememberAsyncImagePainter(model = imageFile)
+        }
+        else -> {
+            val resourceId = context.resources.getIdentifier(
+                restaurant.image?.substringBefore(".") ?: "",
+                "drawable",
+                context.packageName
+            )
+            if (resourceId != 0) {
+                painterResource(id = resourceId)
+            } else {
+                painterResource(id = R.drawable.defecto)
+            }
+        }
     }
 
     Box(
@@ -371,8 +384,7 @@ fun RatingSummaryCard(restaurant: Restaurant, reviews: List<Review>) {
     val normalCount = reviews.count { it.rating >= 2.5f && it.rating < 3.5f }
     val badCount = reviews.count { it.rating >= 1.5f && it.rating < 2.5f }
     val terribleCount = reviews.count { it.rating < 1.5f }
-
-    val totalReviews = reviews.size.coerceAtLeast(1)
+    val totalReviews = reviews.size.coerceAtLeast(0)
 
     Card(
         modifier = Modifier
@@ -401,11 +413,13 @@ fun RatingSummaryCard(restaurant: Restaurant, reviews: List<Review>) {
                         fontWeight = FontWeight.Bold,
                         color = NavyBlue
                     )
+
                     Text(
                         text = "Muy bueno",
                         fontSize = 18.sp,
                         color = NavyBlue
                     )
+
                     Row(
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
@@ -413,7 +427,6 @@ fun RatingSummaryCard(restaurant: Restaurant, reviews: List<Review>) {
                             val isFilled = index < restaurant.average_rating.toInt()
                             val isHalfFilled = !isFilled && index == restaurant.average_rating.toInt() &&
                                     restaurant.average_rating - restaurant.average_rating.toInt() >= 0.5f
-
                             Icon(
                                 imageVector = Icons.Default.Star,
                                 contentDescription = null,
@@ -422,6 +435,7 @@ fun RatingSummaryCard(restaurant: Restaurant, reviews: List<Review>) {
                             )
                         }
                     }
+
                     Text(
                         text = totalReviews.toString() + " reseña/s",
                         fontSize = 16.sp,
@@ -433,11 +447,11 @@ fun RatingSummaryCard(restaurant: Restaurant, reviews: List<Review>) {
                 Column(
                     modifier = Modifier.weight(0.7f)
                 ) {
-                    RatingBar(label = "Excelente", count = excellentCount, percentage = excellentCount.toFloat() / totalReviews)
-                    RatingBar(label = "Bueno", count = goodCount, percentage = goodCount.toFloat() / totalReviews)
-                    RatingBar(label = "Normal", count = normalCount, percentage = normalCount.toFloat() / totalReviews)
-                    RatingBar(label = "Malo", count = badCount, percentage = badCount.toFloat() / totalReviews)
-                    RatingBar(label = "Pésimo", count = terribleCount, percentage = terribleCount.toFloat() / totalReviews)
+                    RatingBar(label = "Excelente", count = excellentCount, percentage = if (totalReviews > 0) excellentCount.toFloat() / totalReviews else 0f)
+                    RatingBar(label = "Bueno", count = goodCount, percentage =  if (totalReviews > 0) goodCount.toFloat() / totalReviews else 0f)
+                    RatingBar(label = "Normal", count = normalCount, percentage =  if (totalReviews > 0) normalCount.toFloat() / totalReviews else 0f)
+                    RatingBar(label = "Malo", count = badCount, percentage =  if (totalReviews > 0) badCount.toFloat() / totalReviews else 0f)
+                    RatingBar(label = "Pésimo", count = terribleCount, percentage =  if (totalReviews > 0) terribleCount.toFloat() / totalReviews else 0f)
                 }
             }
         }
