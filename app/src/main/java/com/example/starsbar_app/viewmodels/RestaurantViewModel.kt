@@ -51,10 +51,10 @@ class RestaurantViewModel : ViewModel() {
         }
     }
 
-    fun registerRestaurant(name: String, location: String, description: String, mail: String, phone: String, image: String, pass: String, onResult: (Boolean, String?) -> Unit) {
+    fun registerRestaurant(name: String, location: String, description: String, mail: String, phone: String, image: String, pass: String, menu: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = restaurantController.registerRestaurant(name, location, description, mail, phone, image, pass)
+                val response = restaurantController.registerRestaurant(name, location, description, mail, phone, image, pass, menu)
                 if (response.success) {
                     onResult(true, response.message)
                 } else {

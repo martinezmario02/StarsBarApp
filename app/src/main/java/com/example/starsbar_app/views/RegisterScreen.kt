@@ -429,6 +429,13 @@ fun RestaurantRegistrationForm(navController: NavController, userViewModel: User
         imageUri = uri
     }
 
+    var menuImageUri by remember { mutableStateOf<Uri?>(null) }
+    val menuLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        menuImageUri = uri
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -585,6 +592,46 @@ fun RestaurantRegistrationForm(navController: NavController, userViewModel: User
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.Gray.copy(alpha = 0.3f))
+                .border(
+                    width = 1.dp,
+                    color = LightGray,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .clickable { menuLauncher.launch("image/*") },
+            contentAlignment = Alignment.Center
+        ) {
+            if (menuImageUri != null) {
+                AsyncImage(
+                    model = menuImageUri,
+                    contentDescription = "Menu Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.AccountBox,
+                        contentDescription = "Add Menu",
+                        tint = White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Text(
+                        text = "Añadir menú",
+                        color = White,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         OutlinedTextField(
             value = mail,
             onValueChange = { mail = it },
@@ -679,19 +726,21 @@ fun RestaurantRegistrationForm(navController: NavController, userViewModel: User
                 } else if (password != confirmPassword) {
                     showError = true
                     errorMessage = "Las contraseñas no coinciden"
-                } else if (imageUri == null) {
+                } else if (imageUri == null || menuImageUri == null) {
                     showError = true
                     errorMessage = "Por favor, selecciona una imagen"
                 } else {
                     showError = false
                     val imageName = saveImageToInternalStorage(context, imageUri!!, name)
-                    if (imageName == null) {
+                    val imageMenuName = saveImageToInternalStorage(context, menuImageUri!!, name+"_menu")
+
+                    if (imageName == null || imageMenuName == null) {
                         showError = true
-                        errorMessage = "No se pudo guardar la imagen"
+                        errorMessage = "No se pudo guardar las imágenes"
                     }
                     else {
                         restaurantViewModel.registerRestaurant(
-                            name, location, description, mail, phone, imageName, password
+                            name, location, description, mail, phone, imageName, password, imageMenuName
                         ) { success, result ->
                             if (success) {
                                 navController.navigate("login")

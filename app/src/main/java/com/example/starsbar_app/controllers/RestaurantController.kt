@@ -27,8 +27,8 @@ class RestaurantController {
         return apiService.addReview(restaurantId, review)
     }
 
-    suspend fun registerRestaurant(name: String, location: String, description: String, mail: String, phone: String, image: String, pass: String): ApiResponse {
-        val request = Restaurant(-1, name, location, description, 0.0f, mail, phone, image, pass)
+    suspend fun registerRestaurant(name: String, location: String, description: String, mail: String, phone: String, image: String, pass: String, menu: String): ApiResponse {
+        val request = Restaurant(-1, name, location, description, 0.0f, mail, phone, image, pass, menu)
         return apiService.registerRestaurant(request)
     }
 }

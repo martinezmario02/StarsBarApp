@@ -71,6 +71,7 @@ fun RestaurantDetailsScreen(viewModel: RestaurantViewModel, userViewModel: UserV
         DescriptionSection(restaurant)
         //LocationSection(restaurant)
         ContactInfoSection(restaurant)
+        MenuImage(restaurant)
         ReviewsSection(viewModel, userViewModel, restaurant, reviews)
     }
 }
@@ -187,6 +188,47 @@ fun HeaderImage(restaurant: Restaurant, reviewsSize: Int) {
                 )
             }
         }
+    }
+}
+
+@Composable
+fun MenuImage(restaurant: Restaurant) {
+    val context = LocalContext.current
+    val menuImageFile = restaurant.menu?.let { File(context.filesDir, it) }
+
+    val painter = when {
+        menuImageFile?.exists() == true -> {
+            rememberAsyncImagePainter(model = menuImageFile)
+        }
+        else -> {
+            val resourceId = restaurant.menu?.let {
+                context.resources.getIdentifier(it, "drawable", context.packageName)
+            } ?: 0
+
+            if (resourceId != 0) {
+                painterResource(id = resourceId)
+            } else {
+                painterResource(id = R.drawable.defecto)
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        SectionTitle(title = "Menú")
+
+        Image(
+            painter = painter,
+            contentDescription = "Imagen del menú",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 

@@ -11,5 +11,6 @@ data class Restaurant(
     val mail: String,
     val phone: String,
     val image: String? = null,
-    val pass: String
+    val pass: String,
+    val menu: String? = null
 ) : Serializable
