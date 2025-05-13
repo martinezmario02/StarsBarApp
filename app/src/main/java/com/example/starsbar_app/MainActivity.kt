@@ -9,6 +9,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
@@ -95,21 +96,34 @@ fun AppNavHost(navController: NavHostController, restaurantViewModel: Restaurant
         // Información del restaurante
         composable("restaurant_details/{id}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toIntOrNull()
-            Log.d("NAVDEBUG", "ID recibido: $id")
+            val restaurants = restaurantViewModel.restaurants.value
 
-            val restaurant = restaurantViewModel.restaurants.value.find { it.id == id }
-            Log.d("NAVDEBUG", "Restaurante: $restaurant")
+            LaunchedEffect(key1 = Unit) {
+                if (restaurants.isEmpty()) {
+                    restaurantViewModel.fetchRestaurants()
+                }
+            }
+
+            val restaurant = restaurants.find { it.id == id }
 
             if (restaurant != null) {
                 MainLayout(navController = navController, title = restaurant.name) {
-                    RestaurantDetailsScreen(viewModel = restaurantViewModel, userViewModel = userViewModel, restaurant = restaurant)
+                    RestaurantDetailsScreen(
+                        viewModel = restaurantViewModel,
+                        userViewModel = userViewModel,
+                        restaurant = restaurant
+                    )
                 }
             } else {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Restaurante no encontrado.")
+                    if (restaurants.isEmpty()) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text("Restaurante no encontrado.")
+                    }
                 }
             }
         }

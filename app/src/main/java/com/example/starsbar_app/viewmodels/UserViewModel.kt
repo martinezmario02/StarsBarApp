@@ -16,8 +16,9 @@ class UserViewModel : ViewModel() {
     var userNames = mutableStateMapOf<Int, String>()
     var currentUserId by mutableStateOf<Int?>(null)
     var currentUserToken by mutableStateOf<String?>(null)
+    var currentUserRol by mutableStateOf<String?>(null)
 
-    fun login(mail: String, pass: String, onResult: (Boolean, String?) -> Unit) {
+    fun login(mail: String, pass: String, onResult: (Boolean, String?, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 val response = userController.loginUser(mail, pass)
@@ -26,16 +27,18 @@ class UserViewModel : ViewModel() {
 
                     val jwt = JWT(response.token)
                     val idFromToken = jwt.getClaim("id").asInt()
+                    val rolFromToken = jwt.getClaim("rol").asString()
                     currentUserId = idFromToken
-                    Log.d("LOGIN", "User ID obtenido del token: $idFromToken")
+                    currentUserRol = rolFromToken
+                    Log.d("LOGIN", "ID obtenido del token: $idFromToken")
 
-                    onResult(true, null)
+                    onResult(true, null, rolFromToken)
                 } else {
-                    onResult(false, response.message)
+                    onResult(false, response.message, null)
                 }
             } catch (e: Exception) {
                 Log.e("LOGIN", "Error: ${e.message}")
-                onResult(false, e.message)
+                onResult(false, e.message, null)
             }
         }
     }

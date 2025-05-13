@@ -271,28 +271,30 @@ fun ReviewsSection(viewModel: RestaurantViewModel, userViewModel: UserViewModel,
 
         RatingSummaryCard(restaurant, reviews)
 
-        OutlinedButton(
-            onClick = { showReviewDialog = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            border = ButtonDefaults.outlinedButtonBorder
-        ) {
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Escribir una opinión",
-                fontSize = 16.sp
-            )
+        if(userViewModel.currentUserRol == "user") {
+            OutlinedButton(
+                onClick = { showReviewDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                border = ButtonDefaults.outlinedButtonBorder
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Escribir una opinión",
+                    fontSize = 16.sp
+                )
+            }
         }
 
-        if (reviews.isEmpty()) {
+        if (reviews.isEmpty() && userViewModel.currentUserRol == "user") {
             Text(
                 text = "¡Sé el primero en comentar!",
                 fontSize = 16.sp,

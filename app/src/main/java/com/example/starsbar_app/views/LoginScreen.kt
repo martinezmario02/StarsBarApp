@@ -128,12 +128,26 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel = vie
                         errorMessage = "Por favor, complete todos los campos"
                     } else {
                         showError = false
-                        userViewModel.login(email, password) { success, result ->
+                        userViewModel.login(email, password) { success, result, rol ->
                             if (success) {
-                                navController.navigate("restaurant_list")
+                                if (rol == "user") {
+                                    navController.navigate("restaurant_list")
+                                } else if (rol == "restaurant") {
+                                    val id = userViewModel.currentUserId
+
+                                    if (id != null) {
+                                        navController.navigate("restaurant_details/$id")
+                                    } else {
+                                        showError = true
+                                        errorMessage = "No se pudo obtener el ID del restaurante"
+                                    }
+                                } else {
+                                    showError = true
+                                    errorMessage = "Rol no reconocido"
+                                }
                             } else {
                                 showError = true
-                                errorMessage = "Error al introducir las credenciales"
+                                errorMessage = result ?: "Error al iniciar sesión"
                             }
                         }
                     }
