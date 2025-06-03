@@ -3,6 +3,7 @@ package com.example.starsbar_app.network
 import com.example.starsbar_app.models.ApiResponse
 import com.example.starsbar_app.models.LoginRequest
 import com.example.starsbar_app.models.LoginResponse
+import com.example.starsbar_app.models.PositiveReviewResponse
 import com.example.starsbar_app.models.RegisterRequest
 import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.models.Review
@@ -45,6 +46,8 @@ interface ApiService {
     @POST("api/restaurants") // Ruta para añadir empresas
     suspend fun registerRestaurant(@Body request: Restaurant): ApiResponse
 
+    @GET ("/api/restaurants/{id}/positive-percentage") // Ruta para obtener porcentaje de valoraciones positivas
+    suspend fun getPositiveReviews(@Path("id") restaurantId: Int): PositiveReviewResponse
 
     companion object {
         private const val BASE_URL = "http://10.0.2.2:3000/"

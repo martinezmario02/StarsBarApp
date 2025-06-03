@@ -292,6 +292,17 @@ fun ReviewsSection(viewModel: RestaurantViewModel, userViewModel: UserViewModel,
                     fontSize = 16.sp
                 )
             }
+        } else {
+            viewModel.positiveReviews?.let { positiveData ->
+                Text(
+                    text = "El ${positiveData.positivePercentage} de las valoraciones son positivas",
+                    fontSize = 16.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
+            }
         }
 
         if (reviews.isEmpty() && userViewModel.currentUserRol == "user") {

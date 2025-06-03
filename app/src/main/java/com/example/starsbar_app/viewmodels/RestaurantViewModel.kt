@@ -1,10 +1,13 @@
 package com.example.starsbar_app.viewmodels
 
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.starsbar_app.controllers.RestaurantController
+import com.example.starsbar_app.models.PositiveReviewResponse
 import com.example.starsbar_app.models.Restaurant
 import com.example.starsbar_app.models.Review
 import com.example.starsbar_app.models.ReviewRequest
@@ -15,6 +18,7 @@ class RestaurantViewModel : ViewModel() {
     private val restaurantController = RestaurantController()
     val restaurants = mutableStateOf<List<Restaurant>>(emptyList())
     val reviews = mutableStateOf<List<Review>>(emptyList())
+    var positiveReviews: PositiveReviewResponse? by mutableStateOf(null)
     var reviewName = ""
 
     fun fetchRestaurants() {
@@ -33,6 +37,12 @@ class RestaurantViewModel : ViewModel() {
                 restaurantController.getRestaurantReviews(id)
             } catch (e: Exception) {
                 emptyList()
+            }
+
+            positiveReviews = try {
+                restaurantController.getPositiveReviews(id)
+            } catch (e: Exception) {
+                null
             }
         }
     }
